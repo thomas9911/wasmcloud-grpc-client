@@ -126,9 +126,11 @@ where
                 .write()
                 .map_err(|e| format!("failed to get body output stream: {e:?}"))?;
 
-            output_stream
-                .blocking_write_and_flush(&body_bytes)
-                .map_err(|e| format!("failed to write request body: {e:?}"))?;
+            for chunk in body_bytes.chunks(4096) {
+                output_stream
+                    .blocking_write_and_flush(chunk)
+                    .map_err(|e| format!("failed to write request body: {e:?}"))?;
+            }
 
             drop(output_stream);
             types::OutgoingBody::finish(outgoing_body, None)
